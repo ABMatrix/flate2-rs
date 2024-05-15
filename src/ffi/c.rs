@@ -228,11 +228,12 @@ impl InflateBackend for Inflate {
 
         match rc {
             MZ_DATA_ERROR | MZ_STREAM_ERROR => mem::decompress_failed(self.inner.msg()),
+            Z_MEM_ERROR => mem::decompress_failed(ErrorMessage(Some("decompress error code -4"))),
             MZ_OK => Ok(Status::Ok),
             MZ_BUF_ERROR => Ok(Status::BufError),
             MZ_STREAM_END => Ok(Status::StreamEnd),
             MZ_NEED_DICT => mem::decompress_need_dict(raw.adler as u32),
-            c => panic!("unknown return code: {}", c),
+            _ => mem::decompress_failed(ErrorMessage(Some("decompress error code"))),
         }
     }
 
@@ -319,7 +320,9 @@ impl DeflateBackend for Deflate {
             MZ_BUF_ERROR => Ok(Status::BufError),
             MZ_STREAM_END => Ok(Status::StreamEnd),
             MZ_STREAM_ERROR => mem::compress_failed(self.inner.msg()),
-            c => panic!("unknown return code: {}", c),
+            Z_MEM_ERROR => mem::compress_failed(ErrorMessage(Some("Compress error code -4"))),
+            _ => mem::compress_failed(ErrorMessage(Some("Compress error"))),
+            //c => panic!("unknown return code: {}", c),
         }
     }
 
